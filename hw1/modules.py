@@ -34,9 +34,6 @@ class Module(object):
     def get_grad_parameters(self):
         return []
 
-    def get_regularized_parameters_mask(self):
-        return []
-
     def train(self):
         self.training = True
 
@@ -77,9 +74,6 @@ class LinearLayer(Module):
 
     def get_grad_parameters(self):
         return [self.gradW, self.gradb]
-
-    def get_regularized_parameters_mask(self):
-        return [True, False]
 
     def __repr__(self):
         return f"Linear {self.W.shape[1]} -> {self.W.shape[0]}"
@@ -131,9 +125,6 @@ class Sequential(Module):
 
     def get_grad_parameters(self):
         return [module.get_grad_parameters() for module in self.modules]
-
-    def get_regularized_parameters_mask(self):
-        return [module.get_regularized_parameters_mask() for module in self.modules]
 
     def train(self):
         self.training = True
@@ -204,11 +195,8 @@ def build_mlp(linear_sizes):
     return mlp
 
 
-def sgd(variables, gradients, config, regularized_mask=None):
+def sgd(variables, gradients, config):
 
     for idx_lay, (current_layer_vars, current_layer_grads) in enumerate(zip(variables, gradients)):
         for idx_var, (current_var, current_grad) in enumerate(zip(current_layer_vars, current_layer_grads)):
-            if regularized_mask is not None and regularized_mask[idx_lay][idx_var]:
-                current_grad += config['C'] * current_var
-
             current_var -= config['learning_rate'] * current_grad
